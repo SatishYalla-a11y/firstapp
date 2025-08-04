@@ -28,7 +28,7 @@ async function startServer() {
 
     serverProcess.stdout.on('data', (data) => {
       stdout += data.toString();
-      if (stdout.includes('Server running at https://localhost:443/')) {
+      if (stdout.includes('Server running at https://localhost:8443/')) {
         serverStarted = true;
         resolve();
       }
@@ -56,7 +56,7 @@ function stopServer() {
 // Test configuration
 const testConfig = {
   host: 'localhost',
-  port: 443,
+  port: 8443,
   timeout: 5000
 };
 

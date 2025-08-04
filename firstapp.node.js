@@ -170,14 +170,14 @@ https.createServer(options, (req, res) => {
       sendJSONResponse(res, 404, { success: false, message: 'Route not found' });
       break;
   }
-}).listen(443, () => {
-  console.log('Server running at https://localhost:443/');
+}).listen(8443, () => {
+  console.log('Server running at https://localhost:8443/');
   console.log('Available API endpoints:');
-  console.log('- GET https://localhost:443/ (Home)');
-  console.log('- GET https://localhost:443/api/users (Get all users)');
-  console.log('- GET https://localhost:443/api/users/:id (Get user by ID)');
-  console.log('- POST https://localhost:443/api/users (Create user)');
-  console.log('- PUT https://localhost:443/api/users/:id (Update user)');
-  console.log('- DELETE https://localhost:443/api/users/:id (Delete user)');
-  console.log('- GET https://localhost:443/api/health (Health check)');
+  console.log('- GET https://localhost:8443/ (Home)');
+  console.log('- GET https://localhost:8443/api/users (Get all users)');
+  console.log('- GET https://localhost:8443/api/users/:id (Get user by ID)');
+  console.log('- POST https://localhost:8443/api/users (Create user)');
+  console.log('- PUT https://localhost:8443/api/users/:id (Update user)');
+  console.log('- DELETE https://localhost:8443/api/users/:id (Delete user)');
+  console.log('- GET https://localhost:8443/api/health (Health check)');
 });
