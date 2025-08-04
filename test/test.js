@@ -1,11 +1,57 @@
 // Simple test for the firstapp API
 const https = require('https');
 const fs = require('fs');
+const { spawn } = require('child_process');
+const path = require('path');
 
 // Disable SSL verification for self-signed certificates
+
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
+
 console.log('Starting tests for FirstApp API...\n');
+
+// Start the server as a child process for CI/CD
+let serverProcess = null;
+let serverStarted = false;
+const SERVER_START_TIMEOUT = 8000; // ms
+
+async function startServer() {
+  return new Promise((resolve, reject) => {
+    const serverPath = path.resolve(__dirname, '../firstapp.node.js');
+    serverProcess = spawn('node', [serverPath], {
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    serverProcess.stdout.on('data', (data) => {
+      stdout += data.toString();
+      if (stdout.includes('Server running at https://localhost:443/')) {
+        serverStarted = true;
+        resolve();
+      }
+    });
+    serverProcess.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+    serverProcess.on('error', (err) => {
+      reject(err);
+    });
+    setTimeout(() => {
+      if (!serverStarted) {
+        reject(new Error('Server did not start in time.\nstdout: ' + stdout + '\nstderr: ' + stderr));
+      }
+    }, SERVER_START_TIMEOUT);
+  });
+}
+
+function stopServer() {
+  if (serverProcess) {
+    serverProcess.kill();
+  }
+}
 
 // Test configuration
 const testConfig = {
@@ -185,32 +231,35 @@ async function checkServerRunning() {
 async function runAllTests() {
   console.log('🚀 FirstApp API Test Suite');
   console.log('==========================\n');
-  
-  // Check if server is running
-  const isServerRunning = await checkServerRunning();
-  
-  if (!isServerRunning) {
-    console.log('❌ Server is not running at https://localhost:443');
-    console.log('   Please start the server with: npm start');
-    console.log('   Then run tests with: npm test\n');
+
+  // Start the server for CI/CD
+  try {
+    await startServer();
+    console.log('✅ Server started for tests\n');
+  } catch (err) {
+    console.error('❌ Failed to start server:', err);
     process.exit(1);
   }
-  
-  console.log('✅ Server is running\n');
-  
+
+  // Wait a moment to ensure server is ready
+  await new Promise((r) => setTimeout(r, 1000));
+
   // Run tests
   await runTest('Health Endpoint', testHealthEndpoint);
   await runTest('Home Endpoint', testHomeEndpoint);
   await runTest('Get Users Endpoint', testGetUsers);
   await runTest('Create User Endpoint', testCreateUser);
-  
+
   // Test summary
   console.log('📊 Test Summary');
   console.log('===============');
   console.log(`Total Tests: ${testsTotal}`);
   console.log(`Passed: ${testsPassed}`);
   console.log(`Failed: ${testsTotal - testsPassed}`);
-  
+
+  // Stop the server
+  stopServer();
+
   if (testsPassed === testsTotal) {
     console.log('\n🎉 All tests passed!');
     process.exit(0);
@@ -222,6 +271,7 @@ async function runAllTests() {
 
 // Run tests
 runAllTests().catch((error) => {
+  stopServer();
   console.error('Test execution failed:', error);
   process.exit(1);
 });
