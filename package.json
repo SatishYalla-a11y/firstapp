@@ -1,0 +1,32 @@
+{
+  "name": "firstapp-nodejs",
+  "version": "1.0.0",
+  "description": "A simple HTTPS Node.js server application",
+  "main": "firstapp.node.js",
+  "scripts": {
+    "start": "node firstapp.node.js",
+    "dev": "node firstapp.node.js",
+    "test": "node test/test.js",
+    "build": "npm run build:prepare && npm run build:zip",
+    "build:prepare": "mkdir -p build && cp firstapp.node.js build/ && cp package.json build/ && cp *.pem build/ 2>/dev/null || true",
+    "build:zip": "cd build && zip -r ../firstapp-build.zip . && cd ..",
+    "build:clean": "rm -rf build *.zip",
+    "lint": "echo 'No linter configured yet'",
+    "pretest": "echo 'Running pre-test checks...'",
+    "posttest": "echo 'Test completed!'"
+  },
+  "keywords": [
+    "nodejs",
+    "https",
+    "server",
+    "api",
+    "rest"
+  ],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}
