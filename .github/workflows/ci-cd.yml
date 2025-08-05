@@ -1,3 +1,4 @@
+
 name: CI/CD for FirstApp Node.js
 
 on:
@@ -32,3 +33,33 @@ jobs:
         with:
           name: firstapp-build
           path: firstapp-build.zip
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: firstapp-build
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy build to EC2
+        run: |
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no firstapp-build.zip ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/
+
+      - name: Deploy on EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'ENDSSH'
+            unzip -o ~/firstapp-build.zip -d ~/firstapp
+            cd ~/firstapp
+            npm install --omit=dev
+            npm install -g pm2 || true
+            pm2 restart firstapp.node.js || pm2 start firstapp.node.js --name firstapp
+          ENDSSH
